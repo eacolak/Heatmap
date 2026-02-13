@@ -236,6 +236,8 @@ class HeatmapExecutor(Component):
         )
 
         print(f"Heatmap: {self.image}")
+        self.data_dict = self.image.dict()
+        print(f"Heatmap: {self.data_dict}")
 
         self.bootstrap["prev_detections"] = self.detections
 
