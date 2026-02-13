@@ -228,19 +228,58 @@ class HeatmapExecutor(Component):
         return superimposed_img
 
     def run(self):
+        # 1. Görüntüyü al ve işleme hazırla
         img = Image.get_frame(img=self.image, redis_db=self.redis_db)
+
+        # 2. Analitik verileri hesapla (Görseli manipüle etmeden hemen önce)
+        heatmap_canvas = self.get_accumulated_heatmap(img.value.shape)
+
+        # Temel İstatistikler
+        max_val = np.max(heatmap_canvas)
+        avg_val = np.mean(heatmap_canvas)
+
+        # Aktif vs Durağan tespiti
+        all_detections = self.detections if self.detections else []
+        filtered = self.filter_idle_detections() if self.do_filter_idle_detections else all_detections
+
+        active_count = len(filtered)
+        idle_count = len(all_detections) - active_count
+
+        # 3. Görsel Overlay İşlemini Gerçekleştir
+        # Bu fonksiyon içerde self.save_accumulated_heatmap(heatmap_canvas) yapar
         img.value = self.generate_heatmap_overlay(img.value)
 
+        # 4. Görüntüyü Kaydet
         self.image = Image.set_frame(
             img=img, package_uID=self.uID, redis_db=self.redis_db
         )
 
-        print(f"Heatmap: {self.image}")
-        self.data_dict = self.image.dict()
-        print(f"Heatmap: {self.data_dict}")
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(heatmap_canvas)
 
+        # 5. DATA_DICT yapılandırması (Sadece Analitik Veriler)
+        self.data_dict = {
+            "intensity_max": round(float(max_val), 2),
+            "intensity_avg": round(float(avg_val), 4),
+            "heat_coverage_percent": round(float((np.count_nonzero(heatmap_canvas) / heatmap_canvas.size) * 100), 2),
+
+            # Koordinat Bilgileri
+            "max_heat_point_x": max_loc[0],
+            "max_heat_point_y": max_loc[1],
+            "min_heat_point_x": min_loc[0],
+            "min_heat_point_y": min_loc[1],
+
+            "total_objects": len(all_detections),
+            "active_objects": active_count,
+            "idle_objects": idle_count,
+            "mobility_index": round(active_count / len(all_detections), 2) if len(all_detections) > 0 else 0,
+            "colormap": self.colormap_key,
+            "decay_applied": self.decay_factor,
+        }
+
+        # Önceki tespiti güncelle
         self.bootstrap["prev_detections"] = self.detections
 
+        # Response oluştur (build_response genellikle context.data_dict'i kullanır)
         packageModel = build_response(context=self)
         return packageModel
 
