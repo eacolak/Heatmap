@@ -235,6 +235,8 @@ class HeatmapExecutor(Component):
             img=img, package_uID=self.uID, redis_db=self.redis_db
         )
 
+        print(f"Heatmap: {self.image}")
+
         self.bootstrap["prev_detections"] = self.detections
 
         packageModel = build_response(context=self)
