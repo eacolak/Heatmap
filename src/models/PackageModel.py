@@ -31,6 +31,17 @@ class InputImage(Input):
     class Config:
         title = "Image"
 
+class OutputData(Output):
+    name: Literal["outputData"] = "outputData"
+    value: Union[list, dict, str]
+    type: str = "object"
+
+    @model_validator(mode="after")
+    def set_type(self):
+        if isinstance(self.value, str):
+            self.type = "string"
+        return self
+
 
 class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
@@ -65,6 +76,7 @@ class HeatmapInputs(Inputs):
 
 class HeatmapOutputs(Outputs):
     outputImage: OutputImage
+    outputData: OutputData
 
 
 class MovementIouThreshold(Config):
