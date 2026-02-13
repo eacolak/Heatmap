@@ -7,6 +7,7 @@ from components.Heatmap.src.models.PackageModel import (
     HeatmapOutputs,
     HeatmapResponse,
     HeatmapExecutor,
+    OutputData,
 )
 
 
