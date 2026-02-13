@@ -12,7 +12,8 @@ from components.Heatmap.src.models.PackageModel import (
 
 def build_response(context):
     outputImage = OutputImage(value=context.image)
-    Outputs = HeatmapOutputs(outputImage=outputImage)
+    outputData = OutputData(value=context.image)
+    Outputs = HeatmapOutputs(outputImage=outputImage, outputData=outputData)
     packageResponse = HeatmapResponse(outputs=Outputs)
     packageExecutor = HeatmapExecutor(value=packageResponse)
     executor = ConfigExecutor(value=packageExecutor)
