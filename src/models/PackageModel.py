@@ -1,4 +1,4 @@
-from pydantic import Field, validator
+from pydantic import Field, validator, model_validator
 from typing import List, Optional, Union, Literal
 from sdks.novavision.src.base.model import (
     Package,
